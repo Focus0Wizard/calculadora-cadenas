@@ -1,24 +1,45 @@
+const DEFAULT_DELIMITERS = /[,|-]/;
 
-function calcular (string) {
-    if(string ==" "){
-        return "0"
-    }
-    let delimitadores = /[,|-]/
+function calcular(cadena) {
+    if (cadena.trim() === "") return "0";
 
-    if(string.startsWith("//[")){
-        const match = string.match(/\/\/(\[.+\])/);
-        if(match){
-            const delimitadorPersonalizado = match[1].slice(1,-1).split("][")
-            const delimitadoresRegex = delimitadorPersonalizado.map(delim => 
-                delim.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
-            ).join("|");
-            delimitadores = new RegExp(`${delimitadoresRegex}|,|-`); 
-            string = string.replace(match[0], "");
+    const delimitadores = extraerDelimitadores(cadena);
+    const secuenciaNumerica = prepararNumeros(cadena, delimitadores);
+    const suma = sumarNumeros(secuenciaNumerica);
+
+    return suma.toString();
+}
+
+function extraerDelimitadores(cadena) {
+    if (cadena.startsWith("//[")) {
+        const match = cadena.match(/\/\/(\[.+\])/);
+        if (match) {
+            const delimitadoresPersonalizados = match[1]
+                .slice(1, -1)
+                .split("][")
+                .map(escaparDelimitador);
+            const regexDelimitadores = delimitadoresPersonalizados.join("|");
+            return new RegExp(`${regexDelimitadores}|${DEFAULT_DELIMITERS.source}`);
         }
     }
-    const numeros = string.split(delimitadores).map(Number).filter(num => num <= 1000)
-    const result = numeros.reduce((sum, num) => sum + num, 0);
-    return result.toString();
+    return DEFAULT_DELIMITERS;
+}
+
+function prepararNumeros(cadena, delimitadores) {
+    const secuencia = cadena.replace(/\/\/(\[.+\])/, "").split(delimitadores);
+    return secuencia.map(Number).filter(esNumeroValido);
+}
+
+function sumarNumeros(numeros) {
+    return numeros.reduce((acumulador, numero) => acumulador + numero, 0);
+}
+
+function escaparDelimitador(delimitador) {
+    return delimitador.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
+function esNumeroValido(numero) {
+    return numero <= 1000;
 }
 
 export default calcular;
